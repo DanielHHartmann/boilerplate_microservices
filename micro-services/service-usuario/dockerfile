@@ -1,0 +1,22 @@
+# Etapa 1: Construção da aplicação
+FROM maven:3.8.5-openjdk-17 AS builder
+WORKDIR /app
+
+# Copia os arquivos do projeto
+COPY . .
+
+# Compila o projeto sem rodar os testes
+RUN mvn clean package -DskipTests
+
+# Etapa 2: Criação do container da aplicação
+FROM openjdk:17-jdk-slim
+WORKDIR /app
+
+# Copia o JAR gerado da etapa anterior
+COPY --from=builder /app/target/*.jar app.jar
+
+# Expor a porta do serviço
+EXPOSE 8080
+
+# Comando para rodar a aplicação
+ENTRYPOINT ["java", "-jar", "app.jar"]

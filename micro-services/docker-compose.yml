@@ -1,0 +1,117 @@
+version: "3.8"
+
+services:
+  mysql_usuarios:
+    image: mysql:8.0
+    container_name: mysql_usuarios
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: banco_usuarios
+      MYSQL_USER: user_usuarios
+      MYSQL_PASSWORD: pass_usuarios
+    ports:
+      - "3307:3306"
+    networks:
+      - minha_rede
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      retries: 5
+      timeout: 5s
+
+  mysql_salas:
+    image: mysql:8.0
+    container_name: mysql_salas
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: banco_salas
+      MYSQL_USER: user_salas
+      MYSQL_PASSWORD: pass_salas
+    ports:
+      - "3308:3306"
+    networks:
+      - minha_rede2
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      retries: 5
+      timeout: 5s
+
+  mysql_reservas:
+    image: mysql:8.0
+    container_name: mysql_reservas
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: banco_reservas
+      MYSQL_USER: user_reservas
+      MYSQL_PASSWORD: pass_reservas
+    ports:
+      - "3309:3306"
+    networks:
+      - minha_rede3
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      retries: 5
+      timeout: 5s
+
+  service-usuario:
+    build: ./service-usuario
+    container_name: service-usuario
+    restart: always
+    depends_on:
+      mysql_usuarios:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql_usuarios:3306/banco_usuarios?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: user_usuarios
+      SPRING_DATASOURCE_PASSWORD: pass_usuarios
+    ports:
+      - "8091:8080"
+    networks:
+      - minha_rede
+      - rede-servicos
+
+  service-sala:
+    build: ./service-sala
+    container_name: service-sala
+    restart: always
+    depends_on:
+      mysql_salas:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql_salas:3306/banco_salas?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: user_salas
+      SPRING_DATASOURCE_PASSWORD: pass_salas
+    ports:
+      - "8092:8080"
+    networks:
+      - minha_rede2
+      - rede-servicos
+
+  service-reserva:
+    build: ./service-reserva
+    container_name: service-reserva
+    restart: always
+    depends_on:
+      mysql_reservas:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql_reservas:3306/banco_reservas?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: user_reservas
+      SPRING_DATASOURCE_PASSWORD: pass_reservas
+    ports:
+      - "8093:8080"
+    networks:
+      - minha_rede3
+      - rede-servicos
+
+networks:
+  minha_rede:
+  minha_rede2:
+  minha_rede3:
+  rede-servicos:
+
