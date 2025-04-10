@@ -1,7 +1,9 @@
 package com.danielhharmann.service_reserva.application.service;
 
 import com.danielhharmann.service_reserva.domain.model.Reserva;
+import com.danielhharmann.service_reserva.infrastructure.config.RabbitConfig;
 import com.danielhharmann.service_reserva.infrastructure.repository.ReservaRepository;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -11,15 +13,14 @@ import java.util.List;
 
 @Service
 public class ReservaService {
-
+    private final RabbitTemplate rabbitTemplate;
     private final ReservaRepository reservaRepository;
-    private final WebClient webClientUsuario;
     private final WebClient webClientSala;
 
-    public ReservaService(ReservaRepository reservaRepository) {
+    public ReservaService(ReservaRepository reservaRepository, RabbitTemplate rabbitTemplate) {
         this.reservaRepository = reservaRepository;
-        this.webClientUsuario = WebClient.create("http://service-usuario:8080/usuarios");
         this.webClientSala = WebClient.create("http://service-sala:8080/salas");
+        this.rabbitTemplate = rabbitTemplate;
     }
 
     public List<Reserva> listarTodas() {
@@ -42,16 +43,9 @@ public class ReservaService {
     }
 
     private boolean usuarioExiste(Long usuarioId) {
-        try {
-            webClientUsuario.get()
-                    .uri("/{id}", usuarioId)
-                    .retrieve()
-                    .toBodilessEntity()
-                    .block(); // Bloqueia até obter resposta (síncrono)
-            return true;
-        } catch (WebClientResponseException e) {
-            return e.getStatusCode() != HttpStatus.NOT_FOUND;
-        }
+        Boolean response = (Boolean) rabbitTemplate.convertSendAndReceive(
+                RabbitConfig.USER_EXISTENCE_QUEUE, usuarioId);
+        return Boolean.TRUE.equals(response);
     }
 
     private boolean salaExiste(Long salaId) {

@@ -69,6 +69,10 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql_usuarios:3306/banco_usuarios?useSSL=false&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: user_usuarios
       SPRING_DATASOURCE_PASSWORD: pass_usuarios
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
     ports:
       - "8091:8080"
     networks:
@@ -103,11 +107,27 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql_reservas:3306/banco_reservas?useSSL=false&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: user_reservas
       SPRING_DATASOURCE_PASSWORD: pass_reservas
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
     ports:
       - "8093:8080"
     networks:
       - minha_rede3
       - rede-servicos
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - rede-servicos
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
 
 networks:
   minha_rede:
